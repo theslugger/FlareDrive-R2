@@ -1,19 +1,21 @@
 import { notFound, parseBucketPath } from "@/utils/bucket";
 
 export async function onRequestGet(context) {
-// =========== 🔴 插入这段代码 (开始) ===========
-  // 获取用户信息
+// 获取用户信息
   const { user } = context.data;
-  
-  // 核心判断：如果用户没登录(user为空) 且 没开启访客模式(GUEST为空)
-  // 则直接返回 401 未授权错误，强制前端弹窗登录
+
+  // 如果没登录 且 没开启访客模式
   if (!user && !context.env.GUEST) {
-    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+    // 关键修改在这里：添加 WWW-Authenticate 头
+    return new Response("Unauthorized", {
       status: 401,
-      headers: { "Content-Type": "application/json" }
+      headers: { 
+        // 👇 这行代码会召唤浏览器的登录弹窗！
+        "WWW-Authenticate": 'Basic realm="FlareDrive R2"',
+        "Access-Control-Allow-Origin": "*" 
+      }
     });
   }
-  // =========== 🔴 插入这段代码 (结束) ===========
   try {
     const [bucket, path] = parseBucketPath(context);
     const prefix = path && `${path}/`;
