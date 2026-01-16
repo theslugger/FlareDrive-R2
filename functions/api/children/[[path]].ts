@@ -1,21 +1,38 @@
 import { notFound, parseBucketPath } from "@/utils/bucket";
 
 export async function onRequestGet(context) {
-// 获取用户信息
-  const { user } = context.data;
+// ==================== 🔴 修正后的完整鉴权逻辑 (开始) ====================
+  let { user } = context.data; // 尝试获取已有用户状态
 
-  // 如果没登录 且 没开启访客模式
+  // 1. 如果没登录，尝试从请求头里“检票” (读取你输入的账号密码)
+  const authHeader = context.request.headers.get("Authorization");
+  if (!user && authHeader) {
+    // 解析 Basic Auth (格式是 "Basic base64编码")
+    const base64Credentials = authHeader.split(" ")[1];
+    if (base64Credentials) {
+      const credentials = atob(base64Credentials); // 解码得到 "admin:qq113320"
+      
+      // 核心验证：检查环境变量里有没有这个 "账号:密码" 的变量名
+      // 因为你的环境变量名就是 "admin:qq113320"
+      if (context.env[credentials]) {
+        // 验证成功！手动赋予用户身份
+        user = { name: credentials.split(":")[0], permissions: context.env[credentials] };
+      }
+    }
+  }
+
+  // 2. 如果经过上面的检票还是没登录，且没开访客模式，才弹窗
   if (!user && !context.env.GUEST) {
-    // 关键修改在这里：添加 WWW-Authenticate 头
     return new Response("Unauthorized", {
       status: 401,
       headers: { 
-        // 👇 这行代码会召唤浏览器的登录弹窗！
+        // 召唤浏览器弹窗
         "WWW-Authenticate": 'Basic realm="FlareDrive R2"',
         "Access-Control-Allow-Origin": "*" 
       }
     });
   }
+  // ==================== 🔴 修正后的完整鉴权逻辑 (结束) ====================
   try {
     const [bucket, path] = parseBucketPath(context);
     const prefix = path && `${path}/`;
