@@ -166,8 +166,8 @@
           </button>
         </li>
         <li>
-          <button @click="copyLink(`/raw/${focusedItem.key}`)">
-            <span>复制链接</span>
+          <button @click="copyLink(`/raw/${focusedItem.key}`, focusedItem.key.split('/').pop())">
+            <span>复制 Markdown</span> 
           </button>
         </li>
         <li>
