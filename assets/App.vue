@@ -234,9 +234,10 @@ export default {
   },
 
   methods: {
-    copyLink(link) {
-      const url = new URL(link, window.location.origin);
-      navigator.clipboard.writeText(url.toString());
+    copyLink(link, filename) {
+      const url = new URL(link, window.location.origin).toString();
+      const textToCopy = filename ? `![${filename}](${url})` : url;
+      navigator.clipboard.writeText(textToCopy);
     },
 
     async copyPaste(source, target) {
